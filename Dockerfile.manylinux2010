@@ -1,0 +1,13 @@
+FROM quay.io/pypa/manylinux2010_x86_64 AS compile-image
+
+RUN yum update
+
+ENV PATH=/root/.local/bin:$PATH
+ENV PATH=/opt/python/cp39-cp39/bin:$PATH
+
+WORKDIR /usr/src/build
+COPY aiohttp aiohttp
+COPY vendor vendor
+COPY setup.py README.rst CHANGES.rst ./
+
+RUN pip wheel -w wheels -e .

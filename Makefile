@@ -1,4 +1,5 @@
 # Some simple testing tasks (sorry, UNIX only).
+DOCKER_NAME_MANYLINUX=edfre-aiohttp-manylinux2010
 
 to-hash-one = $(dir $1).hash/$(addsuffix .hash,$(notdir $1))
 to-hash = $(foreach fname,$1,$(call to-hash-one,$(fname)))
@@ -12,6 +13,28 @@ ALLS := $(sort $(CYS) $(CS) $(PYS) $(REQS))
 
 .PHONY: all
 all: test
+
+manylinux2010-build:
+	docker build . -f Dockerfile.manylinux2010 -t $(DOCKER_NAME_MANYLINUX)
+
+manylinux2010-run: manylinux2010-build
+	-docker rm $(DOCKER_NAME_MANYLINUX)
+	docker run --name $(DOCKER_NAME_MANYLINUX) $(DOCKER_NAME_MANYLINUX)
+
+manylinux2010-create: manylinux2010-build
+	-docker rm $(DOCKER_NAME_MANYLINUX)
+	docker create --name $(DOCKER_NAME_MANYLINUX) $(DOCKER_NAME_MANYLINUX)
+
+manylinux2010-sh:
+	docker exec -it $(DOCKER_NAME_MANYLINUX) sh
+
+manylinux2010-build-wheel: manylinux2010-build
+
+manylinux2010-copy-wheel-to-host: manylinux2010-create
+	docker cp $(DOCKER_NAME_MANYLINUX):/usr/src/build/wheels/ .tmp-wheels-from-manylinux2010
+	mkdir -p wheels
+	cp .tmp-wheels-from-manylinux2010/aiohttp-*.whl wheels/
+	rm -rf .tmp-wheels-from-manylinux2010
 
 tst:
 	@echo $(call to-hash,requirements/cython.txt)
